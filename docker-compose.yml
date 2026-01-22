@@ -1,0 +1,43 @@
+
+services:
+  proxy-checker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: proxy-checker-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Application settings
+      - APP_NAME=Proxy Checker API
+      - APP_VERSION=1.0.0
+
+      # Server settings
+      - HOST=0.0.0.0
+      - PORT=8000
+
+      # Proxy testing settings
+      - DEFAULT_TIMEOUT=10
+      - DEFAULT_MAX_CONCURRENT=10
+      - TEST_URL=http://ip-api.com/json/
+
+      # CORS settings
+      - CORS_ORIGINS=["*"]
+    volumes:
+      # Mount source code for development (comment out for production)
+      - ./app:/app/app
+      - ./static:/app/static
+      - ./proxy_checker.py:/app/proxy_checker.py
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    networks:
+      - proxy-checker-network
+
+networks:
+  proxy-checker-network:
+    driver: bridge

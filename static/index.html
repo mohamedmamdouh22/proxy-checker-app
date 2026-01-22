@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy Checker - Test Your Proxies</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            font-weight: 600;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        .inline-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .stat-card.failed {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .status.working {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status.timeout {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .help-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .inline-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Proxy Checker</h1>
+            <p>Test HTTP, HTTPS, and SOCKS proxies instantly</p>
+        </div>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('single')">Single Proxy</button>
+                <button class="tab" onclick="switchTab('batch')">Batch Check</button>
+            </div>
+
+            <!-- Single Proxy Tab -->
+            <div id="single-tab" class="tab-content active">
+                <form id="single-form" onsubmit="checkSingleProxy(event)">
+                    <div class="form-group">
+                        <label for="proxy">Proxy URL</label>
+                        <input
+                            type="text"
+                            id="proxy"
+                            placeholder="http://proxy.example.com:8080 or user:pass@proxy.com:8080"
+                            required
+                        >
+                        <p class="help-text">Format: protocol://host:port or host:port</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="timeout-single">Timeout (seconds)</label>
+                        <input
+                            type="number"
+                            id="timeout-single"
+                            value="10"
+                            min="1"
+                            max="60"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit">Check Proxy</button>
+                </form>
+            </div>
+
+            <!-- Batch Check Tab -->
+            <div id="batch-tab" class="tab-content">
+                <form id="batch-form" onsubmit="checkBatchProxies(event)">
+                    <div class="form-group">
+                        <label for="proxies">Proxy List (one per line, max 100)</label>
+                        <textarea
+                            id="proxies"
+                            placeholder="http://proxy1.com:8080&#10;proxy2.com:3128&#10;user:pass@proxy3.com:8080"
+                            required
+                        ></textarea>
+                        <p class="help-text">Enter one proxy per line</p>
+                    </div>
+
+                    <div class="inline-inputs">
+                        <div class="form-group">
+                            <label for="timeout-batch">Timeout (seconds)</label>
+                            <input
+                                type="number"
+                                id="timeout-batch"
+                                value="10"
+                                min="1"
+                                max="60"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="max-concurrent">Max Concurrent</label>
+                            <input
+                                type="number"
+                                id="max-concurrent"
+                                value="10"
+                                min="1"
+                                max="50"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <button type="submit">Check All Proxies</button>
+                </form>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Testing proxies, please wait...</p>
+            </div>
+
+            <div class="error-message" id="error-message"></div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card results" id="results">
+            <h2 style="margin-bottom: 20px;">Results</h2>
+
+            <div class="stats" id="stats"></div>
+
+            <div class="table-container">
+                <table id="results-table">
+                    <thead>
+                        <tr>
+                            <th>Proxy</th>
+                            <th>Status</th>
+                            <th>Response Time</th>
+                            <th>IP Address</th>
+                            <th>Location</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+
+            hideResults();
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+            hideResults();
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            hideLoading();
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function showResults() {
+            document.getElementById('results').style.display = 'block';
+        }
+
+        async function checkSingleProxy(event) {
+            event.preventDefault();
+
+            const proxy = document.getElementById('proxy').value.trim();
+            const timeout = parseInt(document.getElementById('timeout-single').value);
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/proxy/check`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ proxy, timeout })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults([data], 1);
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            }
+        }
+
+        async function checkBatchProxies(event) {
+            event.preventDefault();
+
+            const proxiesText = document.getElementById('proxies').value;
+            const proxies = proxiesText.split('\n')
+                .map(p => p.trim())
+                .filter(p => p.length > 0);
+
+            if (proxies.length === 0) {
+                showError('Please enter at least one proxy');
+                return;
+            }
+
+            if (proxies.length > 100) {
+                showError('Maximum 100 proxies allowed');
+                return;
+            }
+
+            const timeout = parseInt(document.getElementById('timeout-batch').value);
+            const maxConcurrent = parseInt(document.getElementById('max-concurrent').value);
+
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/proxy/check-batch`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        proxies,
+                        timeout,
+                        max_concurrent: maxConcurrent
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data.results, data.total, data.working, data.failed, data.success_rate);
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            }
+        }
+
+        function displayResults(results, total, working, failed, successRate) {
+            hideLoading();
+            showResults();
+
+            // Display stats if batch check
+            const statsEl = document.getElementById('stats');
+            if (total > 1) {
+                statsEl.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-value">${total}</div>
+                        <div class="stat-label">Total Checked</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-value">${working}</div>
+                        <div class="stat-label">Working</div>
+                    </div>
+                    <div class="stat-card failed">
+                        <div class="stat-value">${failed}</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${successRate.toFixed(1)}%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                `;
+            } else {
+                statsEl.innerHTML = '';
+            }
+
+            // Display results table
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = results.map(result => {
+                const location = result.city && result.country
+                    ? `${result.city}, ${result.country}`
+                    : result.country || (result.error || '-');
+
+                return `
+                    <tr>
+                        <td style="font-family: monospace; font-size: 0.9rem;">${escapeHtml(result.proxy)}</td>
+                        <td><span class="status ${result.status}">${result.status.toUpperCase()}</span></td>
+                        <td>${result.response_time ? result.response_time + 's' : '-'}</td>
+                        <td>${result.ip_address || '-'}</td>
+                        <td>${escapeHtml(location)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Check API health on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/health`);
+                const data = await response.json();
+                console.log('API Status:', data);
+            } catch (error) {
+                console.error('API not reachable:', error);
+            }
+        });
+    </script>
+</body>
+</html>
